@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Time Left Widget - Preview</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 40px;
+      background: #f5f5f5;
+      min-height: 100vh;
+    }
+    .preview-container {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 24px;
+      font-size: 0.9rem;
+    }
+    .theme-toggle {
+      margin-bottom: 20px;
+    }
+    .theme-toggle button {
+      padding: 8px 16px;
+      margin-right: 8px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      cursor: pointer;
+      background: white;
+    }
+    .theme-toggle button.active {
+      background: #0066cc;
+      color: white;
+      border-color: #0066cc;
+    }
+    .widget-frame {
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    iframe {
+      width: 100%;
+      height: 340px;
+      border: none;
+    }
+    .json-preview {
+      margin-top: 24px;
+      padding: 16px;
+      background: #1e1e1e;
+      border-radius: 8px;
+      color: #d4d4d4;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 0.75rem;
+      overflow-x: auto;
+    }
+    .json-preview summary {
+      cursor: pointer;
+      color: #888;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="preview-container">
+    <h1>Time Left Widget Preview</h1>
+    <p class="subtitle">This simulates how the widget renders in ChatGPT</p>
+
+    <div class="theme-toggle">
+      <button id="light-btn" class="active" onclick="setTheme('light')">Light</button>
+      <button id="dark-btn" onclick="setTheme('dark')">Dark</button>
+    </div>
+
+    <div class="widget-frame">
+      <iframe id="widget-iframe"></iframe>
+    </div>
+
+    <details class="json-preview">
+      <summary>View mock data (window.openai.toolResponseMetadata)</summary>
+      <pre id="json-output"></pre>
+    </details>
+  </div>
+
+  <script>
+    // Generate live time data (same logic as server)
+    function calculateTimeData() {
+      const now = new Date();
+
+      // Day progress
+      const dayStart = new Date(now);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayElapsed = (now - dayStart) / (24 * 60 * 60 * 1000) * 100;
+
+      // Week progress (Monday = 0)
+      const dayOfWeek = (now.getDay() + 6) % 7; // Convert Sun=0 to Mon=0
+      const weekStart = new Date(dayStart);
+      weekStart.setDate(weekStart.getDate() - dayOfWeek);
+      const weekElapsed = (now - weekStart) / (7 * 24 * 60 * 60 * 1000) * 100;
+
+      // Month progress
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      const daysInMonth = monthEnd.getDate();
+      const monthElapsed = (now - monthStart) / (daysInMonth * 24 * 60 * 60 * 1000) * 100;
+
+      // Year progress
+      const yearStart = new Date(now.getFullYear(), 0, 1);
+      const yearEnd = new Date(now.getFullYear() + 1, 0, 1);
+      const yearElapsed = (now - yearStart) / (yearEnd - yearStart) * 100;
+
+      const weekNumber = Math.ceil((((now - new Date(now.getFullYear(), 0, 1)) / 86400000) + 1) / 7);
+
+      return {
+        timestamp: now.toISOString(),
+        day: {
+          label: "Today",
+          elapsed: Math.round(dayElapsed * 10) / 10,
+          remaining: Math.round((100 - dayElapsed) * 10) / 10,
+          detail: now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+        },
+        week: {
+          label: "This Week",
+          elapsed: Math.round(weekElapsed * 10) / 10,
+          remaining: Math.round((100 - weekElapsed) * 10) / 10,
+          detail: `Week ${weekNumber}`
+        },
+        month: {
+          label: "This Month",
+          elapsed: Math.round(monthElapsed * 10) / 10,
+          remaining: Math.round((100 - monthElapsed) * 10) / 10,
+          detail: now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+        },
+        year: {
+          label: "This Year",
+          elapsed: Math.round(yearElapsed * 10) / 10,
+          remaining: Math.round((100 - yearElapsed) * 10) / 10,
+          detail: String(now.getFullYear())
+        }
+      };
+    }
+
+    let currentTheme = 'light';
+
+    function setTheme(theme) {
+      currentTheme = theme;
+      document.getElementById('light-btn').classList.toggle('active', theme === 'light');
+      document.getElementById('dark-btn').classList.toggle('active', theme === 'dark');
+      if (theme === 'dark') {
+        document.body.style.background = '#1a1a1a';
+      } else {
+        document.body.style.background = '#f5f5f5';
+      }
+      renderWidget();
+    }
+
+    function renderWidget() {
+      const timeData = calculateTimeData();
+      document.getElementById('json-output').textContent = JSON.stringify(timeData, null, 2);
+
+      // Mock window.openai for the widget
+      const mockOpenAI = {
+        theme: currentTheme,
+        toolResponseMetadata: timeData,
+        toolOutput: {
+          day_remaining: timeData.day.remaining,
+          week_remaining: timeData.week.remaining,
+          month_remaining: timeData.month.remaining,
+          year_remaining: timeData.year.remaining
+        }
+      };
+
+      // Fetch widget HTML and inject mock
+      fetch('widget.html')
+        .then(r => r.text())
+        .then(html => {
+          const iframe = document.getElementById('widget-iframe');
+          const doc = iframe.contentDocument || iframe.contentWindow.document;
+
+          // Inject window.openai mock before the widget script runs
+          const mockScript = `<script>window.openai = ${JSON.stringify(mockOpenAI)};<\/script>`;
+          const injectedHtml = html.replace('<head>', '<head>' + mockScript);
+
+          doc.open();
+          doc.write(injectedHtml);
+          doc.close();
+        });
+    }
+
+    // Initial render
+    renderWidget();
+
+    // Refresh every minute to keep time current
+    setInterval(renderWidget, 60000);
+  </script>
+</body>
+</html>

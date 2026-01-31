@@ -1,0 +1,19 @@
+[project]
+name = "time-left-chatgpt-app"
+version = "0.1.0"
+description = "ChatGPT app showing time remaining in day/week/month/year"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.0.0",
+    "uvicorn>=0.20.0",
+    "starlette>=0.30.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["server"]
+python_files = ["test_*.py"]
