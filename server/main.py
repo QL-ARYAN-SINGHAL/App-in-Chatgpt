@@ -271,25 +271,25 @@ def create_stripe_checkout_session(
     try:
         # Create Stripe Checkout Session
         session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=[{
-                'price_data': {
-                    'currency': 'usd',
-                    'product_data': {
-                        'name': f'{marathon_name} - Registration',
-                        'description': f'Marathon registration for {marathon_name}',
-                    },
-                    'unit_amount': int(price_usd * 100),  # Convert to cents
-                },
-                'quantity': 1,
-            }],
-            mode='payment',
-            customer_email=customer_email,
-            metadata=metadata,
-            success_url='https://your-domain.com/success?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url='https://your-domain.com/cancel',
-        )
-        
+    payment_method_types=["card"],
+    line_items=[{
+        "price_data": {
+            "currency": "usd",
+            "product_data": {
+                "name": f"{marathon_name} - Registration",
+            },
+            "unit_amount": int(price_usd * 100),
+        },
+        "quantity": 1,
+    }],
+    mode="payment",
+    customer_email=customer_email,
+    metadata=metadata,
+
+    success_url="https://example.com/success",
+    cancel_url="https://example.com/cancel",
+)
+
         return {
             "success": True,
             "payment_url": session.url,
