@@ -1,5 +1,6 @@
 # ABOUTME: MCP server for the "Marathon Finder" ChatGPT app.
 # ABOUTME: Provides tools to search marathons by distance, location, rating, and price.
+# ABOUTME: Integrates Stripe for payment processing.
 
 from __future__ import annotations
 
@@ -15,13 +16,29 @@ from mcp.server.transport_security import TransportSecuritySettings
 
 # Configuration
 ROOT_DIR = Path(__file__).resolve().parent
-ASSETS_DIR = ROOT_DIR.parent / "web"
+ASSETS_DIR = ROOT_DIR.parent / "web"  # web folder is at project root
 TEMPLATE_URI = "ui://widget/main.html"
 MIME_TYPE = "text/html+skybridge"
 
 # Production deployment configuration
 WIDGET_DOMAIN = os.environ.get("WIDGET_DOMAIN", "https://web-sandbox.oaiusercontent.com")
 PORT = int(os.environ.get("PORT", 8000))
+
+# Stripe configuration
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
+STRIPE_ENABLED = bool(STRIPE_SECRET_KEY)
+
+# Import Stripe if available
+if STRIPE_ENABLED:
+    try:
+        import stripe
+        stripe.api_key = STRIPE_SECRET_KEY
+        print("[Marathon Finder] Stripe integration enabled")
+    except ImportError:
+        print("[Marathon Finder] Stripe library not installed. Run: pip install stripe")
+        STRIPE_ENABLED = False
+else:
+    print("[Marathon Finder] Stripe not configured. Set STRIPE_SECRET_KEY environment variable.")
 
 # In-memory registration storage (in production, use a real database)
 REGISTRATIONS = []
@@ -236,6 +253,57 @@ def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
     return distance
 
 
+def create_stripe_checkout_session(
+    marathon_id: int,
+    marathon_name: str,
+    price_usd: float,
+    customer_email: str,
+    customer_name: str,
+    metadata: Dict[str, Any]
+) -> Dict[str, Any]:
+    """Create a Stripe Checkout Session and return the payment URL."""
+    if not STRIPE_ENABLED:
+        return {
+            "success": False,
+            "error": "Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable."
+        }
+    
+    try:
+        # Create Stripe Checkout Session
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': f'{marathon_name} - Registration',
+                        'description': f'Marathon registration for {marathon_name}',
+                    },
+                    'unit_amount': int(price_usd * 100),  # Convert to cents
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            customer_email=customer_email,
+            metadata=metadata,
+            success_url='https://your-domain.com/success?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url='https://your-domain.com/cancel',
+        )
+        
+        return {
+            "success": True,
+            "payment_url": session.url,
+            "session_id": session.id
+        }
+    
+    except Exception as e:
+        print(f"[Marathon Finder] Stripe error: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
 def search_marathons(
     city: Optional[str] = None,
     state: Optional[str] = None,
@@ -436,7 +504,7 @@ async def _list_tools() -> List[types.Tool]:
         types.Tool(
             name="register_for_marathon",
             title="Register for Marathon",
-            description="Register a user for a marathon event. This tool is called from the widget when a user fills out the registration form.",
+            description="Register a user for a marathon event and generate a Stripe payment link. This tool is called from the widget when a user fills out the registration form.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -460,6 +528,10 @@ async def _list_tools() -> List[types.Tool]:
                         "type": "string",
                         "description": "Marathon date",
                     },
+                    "price_usd": {
+                        "type": "number",
+                        "description": "Marathon registration price in USD",
+                    },
                     "full_name": {
                         "type": "string",
                         "description": "Registrant's full name",
@@ -477,7 +549,7 @@ async def _list_tools() -> List[types.Tool]:
                         "description": "Registration timestamp",
                     },
                 },
-                "required": ["full_name", "email", "phone"],
+                "required": ["marathon_id", "marathon_name", "price_usd", "full_name", "email", "phone"],
             },
             annotations={
                 "destructiveHint": False,
@@ -539,6 +611,7 @@ async def _handle_call_tool(req: types.CallToolRequest) -> types.ServerResult:
                 "state": m["state"],
                 "distance": m["distance"],
                 "price": m["price"],
+                "price_usd": m["price_usd"],  # Include numeric price for Stripe
                 "rating": m["rating"],
                 "date": m.get("date", ""),
                 "participants": m.get("participants", ""),
@@ -571,37 +644,98 @@ async def _handle_call_tool(req: types.CallToolRequest) -> types.ServerResult:
     elif tool_name == "register_for_marathon":
         args = req.params.arguments or {}
         
-        # Create registration record
-        registration = {
-            "id": len(REGISTRATIONS) + 1,
-            "marathon_id": args.get("marathon_id"),
-            "marathon_name": args.get("marathon_name", "Unknown Marathon"),
+        # Extract registration data
+        marathon_id = args.get("marathon_id")
+        marathon_name = args.get("marathon_name", "Unknown Marathon")
+        price_usd = args.get("price_usd", 0)
+        full_name = args.get("full_name")
+        email = args.get("email")
+        phone = args.get("phone")
+        
+        # Create metadata for Stripe
+        metadata = {
+            "marathon_id": str(marathon_id),
+            "marathon_name": marathon_name,
             "marathon_city": args.get("marathon_city", ""),
             "marathon_state": args.get("marathon_state", ""),
             "marathon_date": args.get("marathon_date", ""),
-            "full_name": args.get("full_name"),
-            "email": args.get("email"),
-            "phone": args.get("phone"),
-            "timestamp": args.get("timestamp"),
-            "status": "confirmed",
+            "customer_name": full_name,
+            "customer_phone": phone,
+            "registration_timestamp": args.get("timestamp", datetime.now().isoformat()),
         }
         
-        # Store registration
-        REGISTRATIONS.append(registration)
-        
-        # Log for debugging
-        print(f"[Marathon Finder] New registration: {registration}")
-        print(f"[Marathon Finder] Total registrations: {len(REGISTRATIONS)}")
-        
-        # Build response
-        text = f"✅ Successfully registered {registration['full_name']} for {registration['marathon_name']}! A confirmation email will be sent to {registration['email']}."
-        
-        return types.ServerResult(
-            types.CallToolResult(
-                content=[types.TextContent(type="text", text=text)],
-                structuredContent={"success": True, "registration_id": registration["id"]},
-            )
+        # Create Stripe checkout session
+        stripe_result = create_stripe_checkout_session(
+            marathon_id=marathon_id,
+            marathon_name=marathon_name,
+            price_usd=price_usd,
+            customer_email=email,
+            customer_name=full_name,
+            metadata=metadata
         )
+        
+        if stripe_result["success"]:
+            # Create registration record (pending payment)
+            registration = {
+                "id": len(REGISTRATIONS) + 1,
+                "marathon_id": marathon_id,
+                "marathon_name": marathon_name,
+                "marathon_city": args.get("marathon_city", ""),
+                "marathon_state": args.get("marathon_state", ""),
+                "marathon_date": args.get("marathon_date", ""),
+                "full_name": full_name,
+                "email": email,
+                "phone": phone,
+                "price_usd": price_usd,
+                "timestamp": args.get("timestamp"),
+                "status": "pending_payment",
+                "stripe_session_id": stripe_result["session_id"],
+                "payment_url": stripe_result["payment_url"],
+            }
+            
+            # Store registration
+            REGISTRATIONS.append(registration)
+            
+            # Log for debugging
+            print(f"[Marathon Finder] New registration created: {registration}")
+            print(f"[Marathon Finder] Payment URL: {stripe_result['payment_url']}")
+            print(f"[Marathon Finder] Total registrations: {len(REGISTRATIONS)}")
+            
+            # Build response with payment link
+            text = f"✅ Registration details saved for {full_name}!\n\n"
+            text += f"💳 Please complete your payment to finalize your registration for {marathon_name}.\n\n"
+            text += f"Click the link below to proceed to secure payment:\n"
+            text += f"🔗 {stripe_result['payment_url']}\n\n"
+            text += f"After successful payment, you'll receive a confirmation email at {email}."
+            
+            return types.ServerResult(
+                types.CallToolResult(
+                    content=[types.TextContent(type="text", text=text)],
+                    structuredContent={
+                        "success": True,
+                        "registration_id": registration["id"],
+                        "payment_url": stripe_result["payment_url"],
+                        "session_id": stripe_result["session_id"]
+                    },
+                )
+            )
+        else:
+            # Payment link creation failed
+            error_text = f"❌ Unable to generate payment link. Error: {stripe_result.get('error', 'Unknown error')}"
+            
+            return types.ServerResult(
+    types.CallToolResult(
+        content=[
+            types.TextContent(
+                type="text",
+                text=error_text
+            )
+        ],
+        isError=True
+    )
+)
+
+
 
     return types.ServerResult(
         types.CallToolResult(

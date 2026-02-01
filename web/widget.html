@@ -1,1007 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
-      padding: 20px;
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-      color: #1a202c;
-      line-height: 1.6;
-      min-height: 100vh;
-    }
-
-    body.dark {
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-      color: #f1f5f9;
-    }
-
-    .container {
-      max-width: 480px;
-      margin: 0 auto;
-    }
-
-    .header {
-      text-align: center;
-      margin-bottom: 32px;
-      padding: 24px;
-      background: rgba(255, 255, 255, 0.9);
-      border-radius: 24px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-      backdrop-filter: blur(10px);
-    }
-
-    body.dark .header {
-      background: rgba(30, 41, 59, 0.9);
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-    }
-
-    .header h1 {
-      font-size: 1.75rem;
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      margin-bottom: 8px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .header .subtitle {
-      font-size: 0.875rem;
-      opacity: 0.6;
-      font-weight: 500;
-    }
-
-    .header .location {
-      font-size: 0.8rem;
-      margin-top: 8px;
-      padding: 6px 12px;
-      background: rgba(102, 126, 234, 0.1);
-      border-radius: 12px;
-      display: inline-block;
-      font-weight: 500;
-      color: #667eea;
-    }
-
-    body.dark .header .location {
-      background: rgba(102, 126, 234, 0.2);
-      color: #a5b4fc;
-    }
-
-    .marathon-list {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .marathon-card {
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 20px;
-      padding: 20px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 1px solid rgba(0, 0, 0, 0.05);
-      position: relative;
-      overflow: hidden;
-    }
-
-    body.dark .marathon-card {
-      background: rgba(30, 41, 59, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    }
-
-    .marathon-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, #667eea, #764ba2);
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform 0.3s ease;
-    }
-
-    .marathon-card:hover::before {
-      transform: scaleX(1);
-    }
-
-    .marathon-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 32px rgba(102, 126, 234, 0.2);
-    }
-
-    .marathon-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 12px;
-    }
-
-    .marathon-title {
-      flex: 1;
-    }
-
-    .marathon-name {
-      font-size: 1.125rem;
-      font-weight: 700;
-      margin-bottom: 4px;
-      color: #1a202c;
-      letter-spacing: -0.02em;
-    }
-
-    body.dark .marathon-name {
-      color: #f1f5f9;
-    }
-
-    .marathon-location {
-      font-size: 0.8rem;
-      color: #64748b;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    body.dark .marathon-location {
-      color: #94a3b8;
-    }
-
-    .marathon-location::before {
-      content: '📍';
-      font-size: 0.9rem;
-    }
-
-    .rating-badge {
-      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-      color: white;
-      padding: 6px 12px;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
-      white-space: nowrap;
-    }
-
-    .rating-badge::before {
-      content: '⭐';
-    }
-
-    .marathon-details {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid rgba(0, 0, 0, 0.08);
-    }
-
-    body.dark .marathon-details {
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .detail-item {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .detail-label {
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      font-weight: 600;
-      opacity: 0.5;
-    }
-
-    .detail-value {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #667eea;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    body.dark .detail-value {
-      color: #a5b4fc;
-    }
-
-    .detail-value.distance::before {
-      content: '🏃';
-    }
-
-    .detail-value.price::before {
-      content: '💵';
-    }
-
-    .detail-value.date::before {
-      content: '📅';
-    }
-
-    .detail-value.participants::before {
-      content: '👥';
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      background: rgba(255, 255, 255, 0.9);
-      border-radius: 20px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-    }
-
-    body.dark .empty-state {
-      background: rgba(30, 41, 59, 0.9);
-    }
-
-    .empty-state .emoji {
-      font-size: 4rem;
-      margin-bottom: 16px;
-      animation: float 3s ease-in-out infinite;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
-    }
-
-    .empty-state h3 {
-      font-size: 1.25rem;
-      margin-bottom: 8px;
-      color: #1a202c;
-    }
-
-    body.dark .empty-state h3 {
-      color: #f1f5f9;
-    }
-
-    .empty-state p {
-      color: #64748b;
-      font-size: 0.875rem;
-    }
-
-    body.dark .empty-state p {
-      color: #94a3b8;
-    }
-
-    .footer {
-      margin-top: 24px;
-      text-align: center;
-      font-size: 0.75rem;
-      opacity: 0.5;
-      font-weight: 500;
-      font-variant-numeric: tabular-nums;
-      letter-spacing: 0.02em;
-    }
-
-    .loading {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 40px;
-    }
-
-    .loading-spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid rgba(102, 126, 234, 0.2);
-      border-top-color: #667eea;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* Fade in animation */
-    .marathon-card {
-      animation: fadeIn 0.5s ease-out backwards;
-    }
-
-    .marathon-card:nth-child(1) { animation-delay: 0.1s; }
-    .marathon-card:nth-child(2) { animation-delay: 0.2s; }
-    .marathon-card:nth-child(3) { animation-delay: 0.3s; }
-    .marathon-card:nth-child(4) { animation-delay: 0.4s; }
-    .marathon-card:nth-child(5) { animation-delay: 0.5s; }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* Registration Button */
-    .register-btn {
-      width: 100%;
-      margin-top: 16px;
-      padding: 12px 20px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-      letter-spacing: 0.02em;
-    }
-
-    .register-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-    }
-
-    .register-btn:active {
-      transform: translateY(0);
-    }
-
-    /* Modal Overlay */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(8px);
-      z-index: 1000;
-      animation: fadeInOverlay 0.3s ease;
-    }
-
-    .modal-overlay.active {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    @keyframes fadeInOverlay {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
-    }
-
-    /* Modal Container */
-    .modal {
-      background: rgba(255, 255, 255, 0.98);
-      border-radius: 24px;
-      padding: 32px;
-      max-width: 440px;
-      width: 100%;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-      animation: slideUp 0.3s ease;
-      position: relative;
-    }
-
-    body.dark .modal {
-      background: rgba(30, 41, 59, 0.98);
-    }
-
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* Modal Header */
-    .modal-header {
-      margin-bottom: 24px;
-      text-align: center;
-    }
-
-    .modal-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .modal-subtitle {
-      font-size: 0.875rem;
-      color: #64748b;
-      font-weight: 500;
-    }
-
-    body.dark .modal-subtitle {
-      color: #94a3b8;
-    }
-
-    .modal-marathon-info {
-      background: rgba(102, 126, 234, 0.1);
-      padding: 12px 16px;
-      border-radius: 12px;
-      margin-bottom: 24px;
-      text-align: center;
-    }
-
-    body.dark .modal-marathon-info {
-      background: rgba(102, 126, 234, 0.2);
-    }
-
-    .modal-marathon-name {
-      font-weight: 700;
-      color: #667eea;
-      margin-bottom: 4px;
-    }
-
-    body.dark .modal-marathon-name {
-      color: #a5b4fc;
-    }
-
-    .modal-marathon-location {
-      font-size: 0.8rem;
-      opacity: 0.7;
-    }
-
-    /* Close Button */
-    .modal-close {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      width: 32px;
-      height: 32px;
-      border: none;
-      background: rgba(0, 0, 0, 0.05);
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-      transition: all 0.2s ease;
-      color: #64748b;
-    }
-
-    body.dark .modal-close {
-      background: rgba(255, 255, 255, 0.1);
-      color: #94a3b8;
-    }
-
-    .modal-close:hover {
-      background: rgba(0, 0, 0, 0.1);
-      transform: rotate(90deg);
-    }
-
-    body.dark .modal-close:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    /* Form Styles */
-    .registration-form {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .form-label {
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: #1a202c;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    body.dark .form-label {
-      color: #f1f5f9;
-    }
-
-    .form-label .emoji {
-      font-size: 1rem;
-    }
-
-    .form-input {
-      padding: 12px 16px;
-      border: 2px solid rgba(0, 0, 0, 0.1);
-      border-radius: 12px;
-      font-size: 0.95rem;
-      font-family: inherit;
-      transition: all 0.2s ease;
-      background: rgba(255, 255, 255, 0.5);
-      color: #1a202c;
-    }
-
-    body.dark .form-input {
-      background: rgba(255, 255, 255, 0.05);
-      border: 2px solid rgba(255, 255, 255, 0.1);
-      color: #f1f5f9;
-    }
-
-    .form-input:focus {
-      outline: none;
-      border-color: #667eea;
-      background: rgba(255, 255, 255, 0.9);
-      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-    }
-
-    body.dark .form-input:focus {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: #a5b4fc;
-      box-shadow: 0 0 0 4px rgba(165, 180, 252, 0.1);
-    }
-
-    .form-input::placeholder {
-      color: #94a3b8;
-    }
-
-    /* Form Buttons */
-    .form-actions {
-      display: flex;
-      gap: 12px;
-      margin-top: 8px;
-    }
-
-    .form-btn {
-      flex: 1;
-      padding: 14px 24px;
-      border: none;
-      border-radius: 12px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      letter-spacing: 0.02em;
-    }
-
-    .form-btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-    }
-
-    .form-btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-    }
-
-    .form-btn-primary:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .form-btn-secondary {
-      background: rgba(0, 0, 0, 0.05);
-      color: #64748b;
-    }
-
-    body.dark .form-btn-secondary {
-      background: rgba(255, 255, 255, 0.1);
-      color: #94a3b8;
-    }
-
-    .form-btn-secondary:hover {
-      background: rgba(0, 0, 0, 0.1);
-    }
-
-    body.dark .form-btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.15);
-    }
-
-    /* Success Message */
-    .success-message {
-      display: none;
-      text-align: center;
-      padding: 40px 20px;
-    }
-
-    .success-message.active {
-      display: block;
-      animation: fadeIn 0.5s ease;
-    }
-
-    .success-emoji {
-      font-size: 4rem;
-      margin-bottom: 16px;
-      animation: bounce 0.6s ease;
-    }
-
-    @keyframes bounce {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.2); }
-    }
-
-    .success-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-      color: #1a202c;
-    }
-
-    body.dark .success-title {
-      color: #f1f5f9;
-    }
-
-    .success-text {
-      font-size: 0.95rem;
-      color: #64748b;
-      margin-bottom: 24px;
-    }
-
-    body.dark .success-text {
-      color: #94a3b8;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Marathon Finder</title>
+
+<style>
+body { font-family: system-ui; padding: 20px; }
+.marathon-card { border: 1px solid #ddd; padding: 12px; margin-bottom: 12px; }
+button { padding: 8px 12px; cursor: pointer; }
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.5);
+  display: none; align-items: center; justify-content: center;
+}
+.modal-overlay.active { display: flex; }
+.modal { background: #fff; padding: 20px; width: 360px; }
+.success { margin-top: 12px; color: green; }
+</style>
 </head>
+
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>🏃 Marathon Finder</h1>
-      <div class="subtitle" id="subtitle">Find your next race</div>
-      <div class="location" id="location"></div>
-    </div>
 
-    <div class="marathon-list" id="marathon-list">
-      <div class="loading">
-        <div class="loading-spinner"></div>
-      </div>
-    </div>
+<h2>🏃 Marathon Finder</h2>
+<div id="marathon-list"></div>
 
-    <div class="footer" id="footer">
-      Updated just now
-    </div>
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modal-title"></h3>
+
+    <form id="form">
+      <input id="name" placeholder="Full name" required /><br><br>
+      <input id="email" placeholder="Email" type="email" required /><br><br>
+      <input id="phone" placeholder="Phone" required /><br><br>
+
+      <button type="submit">Continue</button>
+      <button type="button" onclick="closeModal()">Cancel</button>
+    </form>
+
+    <div id="instructions" style="display:none;"></div>
+    <div class="success" id="payment"></div>
   </div>
+</div>
 
-  <!-- Registration Modal -->
-  <div class="modal-overlay" id="modal-overlay">
-    <div class="modal">
-      <button class="modal-close" onclick="closeModal()">×</button>
-      
-      <div id="form-content">
-        <div class="modal-header">
-          <h2 class="modal-title">Register for Marathon</h2>
-          <p class="modal-subtitle">Join thousands of runners!</p>
-        </div>
+<script>
+let marathons = []
+let selected = null
 
-        <div class="modal-marathon-info" id="modal-marathon-info">
-          <div class="modal-marathon-name" id="modal-marathon-name"></div>
-          <div class="modal-marathon-location" id="modal-marathon-location"></div>
-        </div>
+function openModal(i) {
+  selected = marathons[i]
+  document.getElementById("modal-title").textContent =
+    `Register for ${selected.name}`
+  document.getElementById("form").style.display = "block"
+  document.getElementById("instructions").style.display = "none"
+  document.getElementById("payment").textContent = ""
+  document.getElementById("modal").classList.add("active")
+}
 
-        <form class="registration-form" id="registration-form" onsubmit="handleSubmit(event)">
-          <div class="form-group">
-            <label class="form-label" for="full-name">
-              <span class="emoji">👤</span>
-              Full Name
-            </label>
-            <input 
-              type="text" 
-              id="full-name" 
-              class="form-input" 
-              placeholder="John Doe" 
-              required
-            />
-          </div>
+function closeModal() {
+  document.getElementById("modal").classList.remove("active")
+}
 
-          <div class="form-group">
-            <label class="form-label" for="email">
-              <span class="emoji">📧</span>
-              Email Address
-            </label>
-            <input 
-              type="email" 
-              id="email" 
-              class="form-input" 
-              placeholder="john@example.com" 
-              required
-            />
-          </div>
+document.getElementById("form").onsubmit = e => {
+  e.preventDefault()
 
-          <div class="form-group">
-            <label class="form-label" for="phone">
-              <span class="emoji">📱</span>
-              Phone Number
-            </label>
-            <input 
-              type="tel" 
-              id="phone" 
-              class="form-input" 
-              placeholder="+1 (555) 123-4567" 
-              required
-            />
-          </div>
+  const payload = {
+    marathon_id: selected.id,
+    marathon_name: selected.name,
+    marathon_city: selected.city,
+    marathon_state: selected.state,
+    marathon_date: selected.date,
+    price_usd: selected.price_usd,
+    full_name: name.value,
+    email: email.value,
+    phone: phone.value
+  }
 
-          <div class="form-actions">
-            <button type="button" class="form-btn form-btn-secondary" onclick="closeModal()">
-              Cancel
-            </button>
-            <button type="submit" class="form-btn form-btn-primary" id="submit-btn">
-              Complete Registration
-            </button>
-          </div>
-        </form>
-      </div>
+  // Store ONLY for display/debug
+  sessionStorage.setItem("registration", JSON.stringify(payload))
 
-      <div class="success-message" id="success-message">
-        <div class="success-emoji">🎉</div>
-        <h3 class="success-title">Registration Successful!</h3>
-        <p class="success-text">We've sent a confirmation email with race details.</p>
-        <button class="form-btn form-btn-primary" onclick="closeModal()" style="width: auto; margin: 0 auto;">
-          Done
-        </button>
-      </div>
-    </div>
-  </div>
+  document.getElementById("form").style.display = "none"
+  document.getElementById("instructions").style.display = "block"
+  document.getElementById("instructions").innerHTML = `
+    <p><strong>Almost done.</strong></p>
+    <p>Type this in chat to continue:</p>
+    <pre>confirm registration</pre>
+  `
+}
 
-  <script>
-    // Global variable to store current marathons data
-    let currentMarathons = [];
-    let selectedMarathonIndex = -1;
+function init() {
+  const data = window.openai?.toolOutput ?? {}
 
-    function openRegistrationModal(index) {
-      selectedMarathonIndex = index;
-      const marathon = currentMarathons[index];
-      
-      // Update modal with marathon info
-      document.getElementById('modal-marathon-name').textContent = marathon.name;
-      document.getElementById('modal-marathon-location').textContent = 
-        `${marathon.city}, ${marathon.state} • ${marathon.date}`;
-      
-      // Show modal
-      document.getElementById('modal-overlay').classList.add('active');
-      
-      // Reset form
-      document.getElementById('registration-form').reset();
-      document.getElementById('form-content').style.display = 'block';
-      document.getElementById('success-message').classList.remove('active');
-    }
+  // Render marathons
+  if (data.marathons) {
+    marathons = data.marathons
+    const list = document.getElementById("marathon-list")
+    list.innerHTML = ""
 
-    function closeModal() {
-      document.getElementById('modal-overlay').classList.remove('active');
-      selectedMarathonIndex = -1;
-    }
+    marathons.forEach((m, i) => {
+      const div = document.createElement("div")
+      div.className = "marathon-card"
+      div.innerHTML = `
+        <strong>${m.name}</strong><br>
+        ${m.city}, ${m.state}<br>
+        ${m.price}<br><br>
+        <button onclick="openModal(${i})">Register</button>
+      `
+      list.appendChild(div)
+    })
+  }
 
-    async function handleSubmit(event) {
-  event.preventDefault();
-  
-  const submitBtn = document.getElementById('submit-btn');
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Registering...';
-  
-  const marathon = currentMarathons[selectedMarathonIndex];
-  const formData = {
-    marathon_id: marathon.id || selectedMarathonIndex,
-    marathon_name: marathon.name,
-    marathon_city: marathon.city,
-    marathon_state: marathon.state,
-    marathon_date: marathon.date,
-    full_name: document.getElementById('full-name').value,
-    email: document.getElementById('email').value,
-    phone: document.getElementById('phone').value,
-    timestamp: new Date().toISOString(),
-  };
-
-  console.log('[Marathon Finder] Submitting registration:', formData);
-
-  try {
-    // ✅ Use the MCP tool invocation system
-    if (window.openai && window.openai.invokeTool) {
-      const result = await window.openai.invokeTool('register_for_marathon', formData);
-      console.log('[Marathon Finder] Registration successful:', result);
-    } else {
-      console.warn('[Marathon Finder] MCP tool invocation not available');
-    }
-
-    // Show success message
-    document.getElementById('form-content').style.display = 'none';
-    document.getElementById('success-message').classList.add('active');
-
-  } catch (error) {
-    console.error('[Marathon Finder] Registration error:', error);
-    alert('Registration failed. Please try again.');
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Complete Registration';
+  // Stripe payment link arrives here
+  if (data.payment_url) {
+    document.getElementById("modal").classList.add("active")
+    document.getElementById("payment").innerHTML = `
+      ✅ Registration created.<br><br>
+      <button onclick="openPayment('${data.payment_url}')">
+        Pay Now
+      </button>
+    `
   }
 }
 
-    // Close modal when clicking outside
-    document.addEventListener('click', (event) => {
-      const modalOverlay = document.getElementById('modal-overlay');
-      if (event.target === modalOverlay) {
-        closeModal();
-      }
-    });
+function openPayment(url) {
+  window.openai?.openLink
+    ? window.openai.openLink(url)
+    : window.open(url, "_blank")
+}
 
-    // Close modal with Escape key
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') {
-        closeModal();
-      }
-    });
+document.addEventListener("DOMContentLoaded", init)
+window.addEventListener("openai:set-globals", init)
+</script>
 
-    function init() {
-      console.log("[Marathon Finder] Initializing widget...");
-      console.log("[Marathon Finder] window.openai:", window.openai);
-      console.log("[Marathon Finder] toolOutput:", window.openai?.toolOutput);
-      console.log("[Marathon Finder] toolResponseMetadata:", window.openai?.toolResponseMetadata);
-
-      // Apply theme
-      const theme = window.openai?.theme ?? "light";
-      document.body.classList.toggle("dark", theme === "dark");
-
-      // Update footer with current time
-      updateFooterTime();
-
-      // Get data from toolOutput
-      const data = window.openai?.toolOutput ?? {};
-      console.log("[Marathon Finder] Parsed data:", data);
-      console.log("[Marathon Finder] Marathons array:", data.marathons);
-
-      // Store marathons globally for registration
-      currentMarathons = data.marathons || [];
-
-      // Update location
-      const locationEl = document.getElementById("location");
-      if (data.location) {
-        locationEl.textContent = data.location;
-        locationEl.style.display = 'inline-block';
-      } else {
-        locationEl.style.display = 'none';
-      }
-
-      // Update subtitle
-      const subtitleEl = document.getElementById("subtitle");
-      if (data.marathons && data.marathons.length > 0) {
-        subtitleEl.textContent = `Found ${data.marathons.length} race${data.marathons.length > 1 ? 's' : ''}`;
-      } else {
-        subtitleEl.textContent = "Find your next race";
-      }
-
-      // Render marathon cards
-      const container = document.getElementById("marathon-list");
-      container.innerHTML = "";
-
-      if (!data.marathons || data.marathons.length === 0) {
-        console.log("[Marathon Finder] No marathons in data, showing empty state");
-        container.innerHTML = `
-          <div class="empty-state">
-            <div class="emoji">🔍</div>
-            <h3>No marathons found</h3>
-            <p>Try adjusting your search criteria</p>
-          </div>
-        `;
-        return;
-      }
-
-      console.log(`[Marathon Finder] Rendering ${data.marathons.length} marathon cards`);
-
-      data.marathons.forEach((marathon, index) => {
-        console.log(`[Marathon Finder] Creating card ${index + 1}:`, marathon);
-        
-        const card = document.createElement("div");
-        card.className = "marathon-card";
-
-        // Build details HTML
-        let detailsHTML = `
-          <div class="detail-item">
-            <div class="detail-label">Distance</div>
-            <div class="detail-value distance">${escapeHtml(marathon.distance)}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Price</div>
-            <div class="detail-value price">${escapeHtml(marathon.price)}</div>
-          </div>
-        `;
-
-        if (marathon.date) {
-          detailsHTML += `
-            <div class="detail-item">
-              <div class="detail-label">Date</div>
-              <div class="detail-value date">${escapeHtml(marathon.date)}</div>
-            </div>
-          `;
-        }
-
-        if (marathon.participants) {
-          detailsHTML += `
-            <div class="detail-item">
-              <div class="detail-label">Runners</div>
-              <div class="detail-value participants">${escapeHtml(marathon.participants)}</div>
-            </div>
-          `;
-        }
-
-        card.innerHTML = `
-          <div class="marathon-header">
-            <div class="marathon-title">
-              <div class="marathon-name">${escapeHtml(marathon.name)}</div>
-              <div class="marathon-location">${escapeHtml(marathon.city)}, ${escapeHtml(marathon.state)}</div>
-            </div>
-            ${marathon.rating ? `<div class="rating-badge">${marathon.rating}</div>` : ''}
-          </div>
-          <div class="marathon-details">
-            ${detailsHTML}
-          </div>
-          <button class="register-btn" onclick="openRegistrationModal(${index})">
-            🎫 Register Now
-          </button>
-        `;
-
-        container.appendChild(card);
-      });
-
-      console.log("[Marathon Finder] Widget rendering complete");
-    }
-
-    function updateFooterTime() {
-      const now = new Date();
-      const timeString = now.toLocaleTimeString([], { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        second: '2-digit'
-      });
-      const dateString = now.toLocaleDateString([], {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric'
-      });
-      
-      const footerEl = document.getElementById("footer");
-      footerEl.textContent = `Updated just now • ${dateString}, ${timeString}`;
-    }
-
-    function escapeHtml(text) {
-      if (!text) return "";
-      const div = document.createElement("div");
-      div.textContent = String(text);
-      return div.innerHTML;
-    }
-
-    // Initialize when DOM is ready
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", init);
-    } else {
-      init();
-    }
-
-    // Update time every second
-    setInterval(updateFooterTime, 1000);
-
-    // Listen for theme changes
-    window.addEventListener("openai:set-globals", () => {
-      console.log("[Marathon Finder] Theme changed, reinitializing...");
-      init();
-    });
-  </script>
 </body>
 </html>
